@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">ButtonPilot</string>
+    <string name="accessibility_service_description">ButtonPilot uses Accessibility to detect hardware button patterns like triple-press Volume Down to trigger automation. It does not read screen content or collect passwords. Enable to allow global hardware button detection.</string>
+    <string name="notification_channel_recording">Voice Recording</string>
+    <string name="notification_channel_recording_desc">Shows active voice recording status</string>
+    <string name="notification_channel_general">General</string>
+    <string name="notification_channel_general_desc">General app notifications</string>
+    <string name="recording_in_progress">Recording in progress</string>
+    <string name="recording_stop">Stop</string>
+    <string name="recording_pause">Pause</string>
+    <string name="recording_resume">Resume</string>
+    <string name="recording_open_app">Open App</string>
+    <string name="permission_mic_required">Microphone permission is required for voice recording.</string>
+    <string name="permission_accessibility_disabled">Accessibility service is disabled. Enable to detect hardware button shortcuts globally.</string>
+    <string name="permission_notification_required">Notification permission is required for foreground recording indicator.</string>
+    <string name="error_storage_unavailable">Storage is unavailable.</string>
+    <string name="error_root_denied">Root access was denied.</string>
+    <string name="error_shortcut_conflict">Shortcut conflict detected.</string>
+    <string name="error_recording_blocked">Recording could not start because Android blocked background microphone access. Tap to open app and start recording.</string>
+</resources>
