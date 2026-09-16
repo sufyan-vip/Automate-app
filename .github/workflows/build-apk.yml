@@ -25,68 +25,47 @@ jobs:
           java-version: 17
           cache: gradle
 
-      - name: Setup Android SDK - Fix for tools package error
+      - name: Setup Android SDK (NO tools package)
         run: |
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          # The old android-actions/setup-android@v3 tries to install deprecated 'tools' package
-          # which causes: Failed to find package 'tools'
-          # Fix: Use sdkmanager directly without 'tools' package
-          # Accept all licenses
+          echo "SDK_ROOT=$ANDROID_SDK_ROOT"
           yes | sdkmanager --licenses || true
-          # Install required SDK components explicitly (no 'tools' package)
-          sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0" || true
-          # Verify installation
-          sdkmanager --list_installed || true
-          echo "SDK setup complete"
+          sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          sdkmanager --list_installed
 
-      - name: Grant execute permission for gradlew
+      - name: Fix gradle wrapper - MUST
         run: |
-          chmod +x ./gradlew || true
-          if [ ! -f ./gradle/wrapper/gradle-wrapper.jar ]; then
-            echo "Downloading gradle-wrapper.jar..."
+          ls -la gradle/wrapper/
+          chmod +x gradlew
+          # Agar jar missing hai to download karo
+          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
+            echo "Downloading wrapper jar..."
             mkdir -p gradle/wrapper
-            curl -L -o gradle/wrapper/gradle-wrapper.jar https://github.com/gradle/gradle/raw/v8.6.0/gradle/wrapper/gradle-wrapper.jar || \
-            curl -L -o gradle/wrapper/gradle-wrapper.jar https://repo1.maven.org/maven2/org/gradle/gradle-wrapper/8.6/gradle-wrapper-8.6.jar || \
-            wget -O gradle/wrapper/gradle-wrapper.jar https://github.com/gradle/gradle/raw/v8.6.0/gradle/wrapper/gradle-wrapper.jar
-            ls -lh gradle/wrapper/
+            curl -fsSL -o gradle/wrapper/gradle-wrapper.jar https://github.com/gradle/gradle/raw/v8.6.0/gradle/wrapper/gradle-wrapper.jar
           fi
+          ls -lh gradle/wrapper/gradle-wrapper.jar
+          ./gradlew --version
+
+      - name: Create local.properties
+        run: echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: 8.6
 
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-            ~/.android/build-cache
-          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/libs.versions.toml') }}
-          restore-keys: |
-            gradle-${{ runner.os }}-
-
-      - name: Run Unit Tests - Triple Volume Down Detector
-        run: |
-          ./gradlew test --tests "com.buttonpilot.app.HardwareShortcutDetectorTest" --stacktrace || ./gradlew testDebugUnitTest --stacktrace
+      - name: Run Unit Tests
+        run: ./gradlew testDebugUnitTest --stacktrace || ./gradlew test --stacktrace
 
       - name: Build Debug APK
-        run: |
-          ./gradlew assembleDebug --stacktrace
-
-      - name: Build Release APK (unsigned)
-        if: success()
-        run: |
-          ./gradlew assembleRelease --stacktrace || echo "Release build failed, debug succeeded"
+        run: ./gradlew assembleDebug --stacktrace --info
 
       - name: List APKs
+        if: always()
         run: |
-          find app/build/outputs -name "*.apk" -type f | xargs ls -lh || echo "No APKs found yet"
-          ls -lh app/build/outputs/apk/debug/ || true
+          find . -name "*.apk" -type f | xargs ls -lh || echo "No APK found"
+          cat app/build/outputs/logs/* 2>/dev/null || true
 
-      - name: Upload Debug APK Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: ButtonPilot-debug-apk
@@ -95,27 +74,3 @@ jobs:
             app/build/outputs/apk/release/*.apk
           if-no-files-found: warn
           retention-days: 30
-
-      - name: Create Release Info
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          echo "## ButtonPilot Build Success" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ APK built successfully" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Acceptance Tests Checklist" >> $GITHUB_STEP_SUMMARY
-          echo "- [x] Triple Volume Down toggles recording or shows foreground start flow" >> $GITHUB_STEP_SUMMARY
-          echo "- [x] While recording, triple press stops and saves file" >> $GITHUB_STEP_SUMMARY
-          echo "- [x] Single press does not trigger recorder" >> $GITHUB_STEP_SUMMARY
-          echo "- [x] Double press + wait beyond timeout + single = no action" >> $GITHUB_STEP_SUMMARY
-          echo "- [x] No CPU/battery spike - event-driven architecture" >> $GITHUB_STEP_SUMMARY
-          echo "- [x] Mic permission revoked handled gracefully" >> $GITHUB_STEP_SUMMARY
-          echo "- [x] Accessibility disabled shows dashboard warning" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Features Implemented" >> $GITHUB_STEP_SUMMARY
-          echo "- HardwareShortcutDetector with debounce, cooldown, timeout" >> $GITHUB_STEP_SUMMARY
-          echo "- AudioRecordingService foreground with microphone type" >> $GITHUB_STEP_SUMMARY
-          echo "- ButtonAccessibilityService lightweight" >> $GITHUB_STEP_SUMMARY
-          echo "- RootController isolated optional module" >> $GITHUB_STEP_SUMMARY
-          echo "- Room DB: ShortcutRuleEntity, RecordingEntity, ActionHistoryEntity" >> $GITHUB_STEP_SUMMARY
-          echo "- Material 3 UI, Dashboard, Permission Center, Diagnostics" >> $GITHUB_STEP_SUMMARY
