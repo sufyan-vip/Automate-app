@@ -25,19 +25,27 @@ jobs:
           java-version: 17
           cache: gradle
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Setup Android SDK - Fix for tools package error
+        run: |
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          # The old android-actions/setup-android@v3 tries to install deprecated 'tools' package
+          # which causes: Failed to find package 'tools'
+          # Fix: Use sdkmanager directly without 'tools' package
+          # Accept all licenses
+          yes | sdkmanager --licenses || true
+          # Install required SDK components explicitly (no 'tools' package)
+          sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0" || true
+          # Verify installation
+          sdkmanager --list_installed || true
+          echo "SDK setup complete"
 
       - name: Grant execute permission for gradlew
         run: |
-          if [ -f ./gradlew ]; then
-            chmod +x ./gradlew
-          fi
-          # Ensure wrapper jar exists - download if missing (offline environment fallback)
+          chmod +x ./gradlew || true
           if [ ! -f ./gradle/wrapper/gradle-wrapper.jar ]; then
             echo "Downloading gradle-wrapper.jar..."
             mkdir -p gradle/wrapper
-            # Try multiple sources
             curl -L -o gradle/wrapper/gradle-wrapper.jar https://github.com/gradle/gradle/raw/v8.6.0/gradle/wrapper/gradle-wrapper.jar || \
             curl -L -o gradle/wrapper/gradle-wrapper.jar https://repo1.maven.org/maven2/org/gradle/gradle-wrapper/8.6/gradle-wrapper-8.6.jar || \
             wget -O gradle/wrapper/gradle-wrapper.jar https://github.com/gradle/gradle/raw/v8.6.0/gradle/wrapper/gradle-wrapper.jar
@@ -62,28 +70,16 @@ jobs:
 
       - name: Run Unit Tests - Triple Volume Down Detector
         run: |
-          if [ -f ./gradlew ]; then
-            ./gradlew test --tests "com.buttonpilot.app.HardwareShortcutDetectorTest" --stacktrace || ./gradlew testDebugUnitTest --stacktrace
-          else
-            gradle test --tests "com.buttonpilot.app.HardwareShortcutDetectorTest" --stacktrace || gradle testDebugUnitTest --stacktrace
-          fi
+          ./gradlew test --tests "com.buttonpilot.app.HardwareShortcutDetectorTest" --stacktrace || ./gradlew testDebugUnitTest --stacktrace
 
       - name: Build Debug APK
         run: |
-          if [ -f ./gradlew ]; then
-            ./gradlew assembleDebug --stacktrace
-          else
-            gradle assembleDebug --stacktrace
-          fi
+          ./gradlew assembleDebug --stacktrace
 
       - name: Build Release APK (unsigned)
         if: success()
         run: |
-          if [ -f ./gradlew ]; then
-            ./gradlew assembleRelease --stacktrace || echo "Release build failed, debug succeeded"
-          else
-            gradle assembleRelease --stacktrace || echo "Release build failed"
-          fi
+          ./gradlew assembleRelease --stacktrace || echo "Release build failed, debug succeeded"
 
       - name: List APKs
         run: |
