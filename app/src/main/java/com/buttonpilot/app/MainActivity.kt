@@ -1,6 +1,7 @@
 package com.buttonpilot.app
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -21,7 +22,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.buttonpilot.app.service.AudioRecordingService
-import com.buttonpilot.app.service.RecordingManager
 import com.buttonpilot.app.ui.theme.ButtonPilotTheme
 
 class MainActivity : ComponentActivity() {
@@ -78,7 +78,8 @@ fun Dashboard(
     val a11yEnabled = remember {
         (Settings.Secure.getString(ctx.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES) ?: "").contains(ctx.packageName)
     }
-    val recording = RecordingManager.isRecording()
+    val sp = remember { ctx.getSharedPreferences("state", Context.MODE_PRIVATE) }
+    var recording by remember { mutableStateOf(sp.getBoolean("recording", false)) }
 
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
