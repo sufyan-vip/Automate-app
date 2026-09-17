@@ -9,6 +9,9 @@ import javax.inject.Singleton
 /**
  * Extremely reliable state machine for hardware button pattern detection.
  * Testable, no Android dependencies, processes only KEY_DOWN.
+ *
+ * Implements conflict resolution: a double-press is held until maxIntervalBetweenPresses
+ * elapses so a third press (making it a triple) is not shadowed by a premature double.
  */
 @Singleton
 class HardwareShortcutDetector @Inject constructor() {
@@ -20,12 +23,13 @@ class HardwareShortcutDetector @Inject constructor() {
     )
 
     private var config = Config()
-    private val pressTimes = mutableListOf<Long>()
+
+    // For each key, we track the timestamps of presses in the current sequence.
+    private val downPresses = mutableListOf<Long>()
+    private val upPresses = mutableListOf<Long>()
+
     private var lastTriggerTime: Long = 0L
     private var lastEventTime: Long = 0L
-
-    // For volume up tracking as well
-    private val pressTimesUp = mutableListOf<Long>()
 
     fun updateConfig(newConfig: Config) {
         config = newConfig
@@ -35,140 +39,100 @@ class HardwareShortcutDetector @Inject constructor() {
      * Process a normalized key signal and return detected shortcut event if any.
      */
     fun onKeySignal(signal: KeySignal): ShortcutEvent? {
-        // Process KEY_DOWN only when appropriate, ignore KEY_UP for triple detection
         if (signal.action != KeyAction.DOWN) return null
 
         val now = signal.eventTime
 
-        // Check cooldown to prevent single triple press firing twice
+        // Cooldown prevents a single triple press firing twice
         if (now - lastTriggerTime < config.cooldownMs) {
             return null
         }
 
-        // Reset if timeout exceeded
+        // Reset sequence if gap since last event exceeds the timeout
         if (lastEventTime != 0L && now - lastEventTime > config.sequenceTimeoutMs) {
-            pressTimes.clear()
-            pressTimesUp.clear()
+            downPresses.clear()
+            upPresses.clear()
         }
-
         lastEventTime = now
 
         return when (signal.keyCode) {
-            KeyCode.VOLUME_DOWN -> handleVolumeDown(now)
-            KeyCode.VOLUME_UP -> handleVolumeUp(now)
+            KeyCode.VOLUME_DOWN -> handle(downPresses, now, isDown = true)
+            KeyCode.VOLUME_UP -> handle(upPresses, now, isDown = false)
         }
     }
 
-    private fun handleVolumeDown(now: Long): ShortcutEvent? {
-        // Clean old presses beyond sequence timeout
-        pressTimes.removeAll { now - it > config.sequenceTimeoutMs }
+    private fun handle(presses: MutableList<Long>, now: Long, isDown: Boolean): ShortcutEvent? {
+        // Drop presses older than sequenceTimeout
+        presses.removeAll { now - it > config.sequenceTimeoutMs }
 
-        // Check interval between consecutive presses
-        if (pressTimes.isNotEmpty()) {
-            val lastPress = pressTimes.last()
-            if (now - lastPress > config.maxIntervalBetweenPressesMs) {
-                pressTimes.clear()
-            }
+        // If the gap from previous press exceeds max interval, restart sequence
+        if (presses.isNotEmpty() && now - presses.last() > config.maxIntervalBetweenPressesMs) {
+            presses.clear()
         }
 
-        pressTimes.add(now)
+        presses.add(now)
 
-        // Detect patterns
-        return when (pressTimes.size) {
-            2 -> {
-                // Check if it's within interval
-                if (pressTimes[1] - pressTimes[0] <= config.maxIntervalBetweenPressesMs) {
-                    ShortcutEvent.DoubleVolumeDown
-                } else {
-                    pressTimes.clear()
-                    pressTimes.add(now)
-                    null
-                }
-            }
-            3 -> {
-                val interval1 = pressTimes[1] - pressTimes[0]
-                val interval2 = pressTimes[2] - pressTimes[1]
-                val total = pressTimes[2] - pressTimes[0]
-                if (interval1 <= config.maxIntervalBetweenPressesMs &&
-                    interval2 <= config.maxIntervalBetweenPressesMs &&
-                    total <= config.sequenceTimeoutMs
-                ) {
-                    // Triple detected
-                    lastTriggerTime = now
-                    pressTimes.clear()
-                    ShortcutEvent.TripleVolumeDown
-                } else {
-                    // Shift window: keep last 2
-                    val lastTwo = pressTimes.takeLast(2).toMutableList()
-                    pressTimes.clear()
-                    pressTimes.addAll(lastTwo)
-                    // Recheck if last two still form double?
-                    null
-                }
-            }
-            else -> {
-                if (pressTimes.size > 3) {
-                    // Keep only last 3 for safety
-                    val lastThree = pressTimes.takeLast(3)
-                    pressTimes.clear()
-                    pressTimes.addAll(lastThree)
-                }
-                null
+        // Emit triple on 3rd press. Do NOT emit double on 2nd press; let the conflict
+        // resolver / timeout flush a pending double after the waiting window passes.
+        if (presses.size >= 3) {
+            val a = presses[presses.size - 3]
+            val b = presses[presses.size - 2]
+            val c = presses[presses.size - 1]
+            if (b - a <= config.maxIntervalBetweenPressesMs &&
+                c - b <= config.maxIntervalBetweenPressesMs &&
+                c - a <= config.sequenceTimeoutMs
+            ) {
+                lastTriggerTime = now
+                presses.clear()
+                return if (isDown) ShortcutEvent.TripleVolumeDown else ShortcutEvent.TripleVolumeUp
+            } else {
+                // Shift window: keep only the last two presses for re-evaluation
+                val lastTwo = presses.takeLast(2).toMutableList()
+                presses.clear()
+                presses.addAll(lastTwo)
             }
         }
+        return null
     }
 
-    private fun handleVolumeUp(now: Long): ShortcutEvent? {
-        pressTimesUp.removeAll { now - it > config.sequenceTimeoutMs }
+    /** Called by [ShortcutEventBus] when the pending-double timeout fires. */
+    fun flushPending(now: Long): ShortcutEvent? {
+        val results = mutableListOf<ShortcutEvent>()
+        if (shouldFlushDouble(downPresses, now)) {
+            downPresses.clear()
+            results += ShortcutEvent.DoubleVolumeDown
+        }
+        if (shouldFlushDouble(upPresses, now)) {
+            upPresses.clear()
+            results += ShortcutEvent.DoubleVolumeUp
+        }
+        // Only one flush expected at a time - return the first
+        return results.firstOrNull()
+    }
 
-        if (pressTimesUp.isNotEmpty()) {
-            val lastPress = pressTimesUp.last()
-            if (now - lastPress > config.maxIntervalBetweenPressesMs) {
-                pressTimesUp.clear()
+    private fun shouldFlushDouble(presses: MutableList<Long>, now: Long): Boolean {
+        if (presses.size == 2) {
+            val (a, b) = presses[0] to presses[1]
+            if (b - a <= config.maxIntervalBetweenPressesMs &&
+                now - b >= config.maxIntervalBetweenPressesMs
+            ) {
+                return true
             }
         }
-
-        pressTimesUp.add(now)
-
-        return when (pressTimesUp.size) {
-            2 -> {
-                if (pressTimesUp[1] - pressTimesUp[0] <= config.maxIntervalBetweenPressesMs) {
-                    ShortcutEvent.DoubleVolumeUp
-                } else {
-                    pressTimesUp.clear()
-                    pressTimesUp.add(now)
-                    null
-                }
-            }
-            3 -> {
-                val i1 = pressTimesUp[1] - pressTimesUp[0]
-                val i2 = pressTimesUp[2] - pressTimesUp[1]
-                val total = pressTimesUp[2] - pressTimesUp[0]
-                if (i1 <= config.maxIntervalBetweenPressesMs && i2 <= config.maxIntervalBetweenPressesMs && total <= config.sequenceTimeoutMs) {
-                    lastTriggerTime = now
-                    pressTimesUp.clear()
-                    ShortcutEvent.TripleVolumeUp
-                } else {
-                    val lastTwo = pressTimesUp.takeLast(2).toMutableList()
-                    pressTimesUp.clear()
-                    pressTimesUp.addAll(lastTwo)
-                    null
-                }
-            }
-            else -> null
-        }
+        return false
     }
 
     fun reset() {
-        pressTimes.clear()
-        pressTimesUp.clear()
+        downPresses.clear()
+        upPresses.clear()
         lastEventTime = 0L
+        lastTriggerTime = 0L
     }
 
     fun getCurrentState(): DetectorState {
         return DetectorState(
-            downPressCount = pressTimes.size,
-            upPressCount = pressTimesUp.size,
+            downPressCount = downPresses.size,
+            upPressCount = upPresses.size,
             lastEventTime = lastEventTime,
             lastTriggerTime = lastTriggerTime,
             isInCooldown = System.currentTimeMillis() - lastTriggerTime < config.cooldownMs
