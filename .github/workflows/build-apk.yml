@@ -25,28 +25,103 @@ jobs:
           java-version: 17
           cache: gradle
 
-      - name: Setup Android SDK (NO tools package)
+      - name: Setup Android SDK and fix sdkmanager PATH
         run: |
-          echo "SDK_ROOT=$ANDROID_SDK_ROOT"
-          yes | sdkmanager --licenses || true
-          sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-          sdkmanager --list_installed
+          set -e
+          echo "Initial SDK envs:"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          echo "ANDROID_HOME=$ANDROID_HOME"
 
-      - name: Fix gradle wrapper - MUST
-        run: |
-          ls -la gradle/wrapper/
-          chmod +x gradlew
-          # Agar jar missing hai to download karo
-          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
-            echo "Downloading wrapper jar..."
-            mkdir -p gradle/wrapper
-            curl -fsSL -o gradle/wrapper/gradle-wrapper.jar https://github.com/gradle/gradle/raw/v8.6.0/gradle/wrapper/gradle-wrapper.jar
+          # Detect SDK root
+          if [ -z "$ANDROID_SDK_ROOT" ]; then
+            if [ -d "$HOME/Android/Sdk" ]; then
+              echo "ANDROID_SDK_ROOT=$HOME/Android/Sdk" >> $GITHUB_ENV
+              export ANDROID_SDK_ROOT="$HOME/Android/Sdk"
+            elif [ -d "/usr/local/lib/android/sdk" ]; then
+              echo "ANDROID_SDK_ROOT=/usr/local/lib/android/sdk" >> $GITHUB_ENV
+              export ANDROID_SDK_ROOT="/usr/local/lib/android/sdk"
+            else
+              # Fallback: download commandlinetools manually
+              echo "Installing cmdline-tools manually..."
+              sudo mkdir -p /usr/local/lib/android/sdk/cmdline-tools
+              cd /tmp
+              wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline.zip
+              sudo unzip -q -o cmdline.zip -d /usr/local/lib/android/sdk/cmdline-tools/
+              sudo mv /usr/local/lib/android/sdk/cmdline-tools/cmdline-tools /usr/local/lib/android/sdk/cmdline-tools/latest
+              echo "ANDROID_SDK_ROOT=/usr/local/lib/android/sdk" >> $GITHUB_ENV
+              export ANDROID_SDK_ROOT="/usr/local/lib/android/sdk"
+            fi
           fi
-          ls -lh gradle/wrapper/gradle-wrapper.jar
+
+          # Try to find sdkmanager in common locations and add to PATH
+          CANDIDATES=(
+            "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin"
+            "$ANDROID_SDK_ROOT/cmdline-tools/11.0/bin"
+            "$ANDROID_SDK_ROOT/cmdline-tools/10.0/bin"
+            "$ANDROID_SDK_ROOT/cmdline-tools/9.0/bin"
+            "$ANDROID_SDK_ROOT/cmdline-tools/bin"
+            "$ANDROID_SDK_ROOT/tools/bin"
+            "$ANDROID_SDK_ROOT/build-tools/34.0.0"
+          )
+          ADDED=0
+          for c in "${CANDIDATES[@]}"; do
+            if [ -d "$c" ] && [ -f "$c/sdkmanager" ]; then
+              echo "$c" >> $GITHUB_PATH
+              export PATH="$c:$PATH"
+              echo "Added to PATH: $c"
+              ADDED=1
+              break
+            fi
+          done
+
+          if [ "$ADDED" -eq 0 ]; then
+            # cmdline-tools missing — download
+            echo "sdkmanager not found, downloading latest cmdline-tools..."
+            sudo mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
+            cd /tmp
+            wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline.zip
+            sudo unzip -q -o cmdline.zip -d "$ANDROID_SDK_ROOT/cmdline-tools/"
+            sudo rm -rf "$ANDROID_SDK_ROOT/cmdline-tools/latest"
+            sudo mv "$ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools" "$ANDROID_SDK_ROOT/cmdline-tools/latest"
+            sudo chmod +x "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+            echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
+            export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH"
+          fi
+
+          echo "--- Checking sdkmanager ---"
+          which sdkmanager
+          sdkmanager --version || true
+
+      - name: Accept licenses and install SDK components
+        run: |
+          set -e
+          echo "Accepting Android SDK licenses..."
+          yes "y" | sdkmanager --licenses > /dev/null || true
+          echo "Installing platform-tools, platforms;android-34, build-tools;34.0.0 ..."
+          sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          echo "Installed:"
+          sdkmanager --list_installed | head -40
+
+      - name: Fix gradle wrapper jar
+        run: |
+          set -e
+          ls -la gradle/wrapper/ || true
+          chmod +x gradlew
+          if [ ! -f gradle/wrapper/gradle-wrapper.jar ] || [ ! -s gradle/wrapper/gradle-wrapper.jar ]; then
+            echo "Downloading gradle-wrapper.jar ..."
+            mkdir -p gradle/wrapper
+            curl -fsSL -o gradle/wrapper/gradle-wrapper.jar \
+              "https://raw.githubusercontent.com/gradle/gradle/v8.6.0/gradle/wrapper/gradle-wrapper.jar"
+            ls -lh gradle/wrapper/gradle-wrapper.jar
+            file gradle/wrapper/gradle-wrapper.jar || true
+          fi
           ./gradlew --version
 
       - name: Create local.properties
-        run: echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+        run: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+          echo "--- local.properties ---"
+          cat local.properties
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
@@ -54,16 +129,27 @@ jobs:
           gradle-version: 8.6
 
       - name: Run Unit Tests
-        run: ./gradlew testDebugUnitTest --stacktrace || ./gradlew test --stacktrace
+        run: |
+          set -e
+          ./gradlew testDebugUnitTest --stacktrace
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace --info
+        run: |
+          set -e
+          ./gradlew assembleDebug --stacktrace
 
-      - name: List APKs
+      - name: List APKs and build logs
         if: always()
         run: |
-          find . -name "*.apk" -type f | xargs ls -lh || echo "No APK found"
-          cat app/build/outputs/logs/* 2>/dev/null || true
+          echo "=== APKs found ==="
+          find . -path ./node_modules -prune -o -name "*.apk" -type f -print -exec ls -lh {} \; || echo "No APK found"
+          echo "=== Build logs ==="
+          for d in app/build/outputs/logs app/build/reports build/reports; do
+            if [ -d "$d" ]; then
+              echo "--- $d ---"
+              ls -la "$d" 2>/dev/null || true
+            fi
+          done
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
