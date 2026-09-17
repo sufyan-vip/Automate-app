@@ -1,7 +1,6 @@
 package com.buttonpilot.app.feature.automation
 
 import com.buttonpilot.app.core.logging.DiagnosticLogger
-import com.buttonpilot.app.service.accessibility.InputNormalizer
 import com.buttonpilot.app.service.accessibility.KeySignal
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
