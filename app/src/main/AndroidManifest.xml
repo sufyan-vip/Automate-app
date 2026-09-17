@@ -2,32 +2,22 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Core permissions -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
-    <!-- Optional for actions -->
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.FLASHLIGHT" />
-    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
-
     <application
         android:name=".ButtonPilotApp"
-        android:allowBackup="true"
-        android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="@xml/backup_rules"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.ButtonPilot"
-        android:enableOnBackInvokedCallback="true"
         tools:targetApi="34">
 
         <activity
@@ -41,16 +31,14 @@
             </intent-filter>
         </activity>
 
-        <!-- Foreground Recording Service -->
         <service
-            android:name=".service.recording.AudioRecordingService"
+            android:name=".service.AudioRecordingService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="microphone" />
 
-        <!-- Accessibility Service -->
         <service
-            android:name=".service.accessibility.ButtonAccessibilityService"
+            android:name=".service.ButtonAccessibilityService"
             android:exported="true"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
@@ -61,28 +49,5 @@
                 android:resource="@xml/accessibility_service_config" />
         </service>
 
-        <!-- Boot Receiver - lightweight restoration only -->
-        <receiver
-            android:name=".receiver.BootReceiver"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter android:priority="100">
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
-            </intent-filter>
-        </receiver>
-
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.provider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
-        </provider>
-
     </application>
-
 </manifest>
