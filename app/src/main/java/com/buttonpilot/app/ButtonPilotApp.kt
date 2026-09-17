@@ -4,6 +4,7 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import com.buttonpilot.app.R
 import com.buttonpilot.app.core.common.Constants
 import com.buttonpilot.app.data.local.AppDatabase
 import com.buttonpilot.app.data.local.ShortcutRuleEntity
