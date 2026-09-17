@@ -4,8 +4,6 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
-import androidx.hilt.work.HiltWorkerFactory
-import androidx.work.Configuration
 import com.buttonpilot.app.core.common.Constants
 import com.buttonpilot.app.data.local.AppDatabase
 import com.buttonpilot.app.data.local.ShortcutRuleEntity
@@ -16,18 +14,10 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltAndroidApp
-class ButtonPilotApp : Application(), Configuration.Provider {
-
-    @Inject
-    lateinit var workerFactory: HiltWorkerFactory
+class ButtonPilotApp : Application() {
 
     @Inject
     lateinit var database: AppDatabase
-
-    override val workManagerConfiguration: Configuration
-        get() = Configuration.Builder()
-            .setWorkerFactory(workerFactory)
-            .build()
 
     override fun onCreate() {
         super.onCreate()

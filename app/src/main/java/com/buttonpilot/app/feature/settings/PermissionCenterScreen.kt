@@ -49,11 +49,9 @@ fun PermissionCenterScreen(
     val micLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         micGranted = granted
     }
-    val notificationLauncher = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            notificationGranted = granted
-        }
-    } else null
+    val notificationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        notificationGranted = granted
+    }
 
     fun refreshAll() {
         micGranted = viewModel.permissionManager.isMicrophoneGranted()
@@ -94,7 +92,9 @@ fun PermissionCenterScreen(
                 actionText = if (notificationGranted) "Granted" else "Grant",
                 onAction = {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        notificationLauncher?.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
                     } else {
                         context.startActivity(viewModel.permissionManager.getNotificationSettingsIntent())
                     }

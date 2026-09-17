@@ -50,6 +50,9 @@ fun OnboardingScreen(
         micGranted = granted
         if (granted) step = 3
     }
+    val notificationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+        step = 5
+    }
 
     Column(
         modifier = Modifier
@@ -118,15 +121,9 @@ fun OnboardingScreen(
                         Text("Required for foreground-service notification while recording. Android requires visible indicator for microphone use.")
                     }
                 }
-                val notificationLauncher = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-                        step = 5
-                    }
-                } else null
-
                 Button(onClick = {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        notificationLauncher?.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     } else {
                         step = 5
                     }
