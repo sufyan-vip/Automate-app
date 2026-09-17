@@ -27,11 +27,11 @@ jobs:
 
       - name: Setup Android SDK and fix sdkmanager PATH
         run: |
-          set -e
+          set -euo pipefail
           echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
           echo "ANDROID_HOME=$ANDROID_HOME"
 
-          if [ -z "$ANDROID_SDK_ROOT" ]; then
+          if [ -z "${ANDROID_SDK_ROOT:-}" ]; then
             if [ -d "$HOME/Android/Sdk" ]; then
               echo "ANDROID_SDK_ROOT=$HOME/Android/Sdk" >> $GITHUB_ENV
               export ANDROID_SDK_ROOT="$HOME/Android/Sdk"
@@ -84,14 +84,14 @@ jobs:
 
       - name: Accept licenses and install SDK components
         run: |
-          set -e
+          set -euo pipefail
           yes "y" | sdkmanager --licenses > /dev/null || true
           sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0"
           sdkmanager --list_installed | head -40
 
       - name: Fix gradle wrapper jar
         run: |
-          set -e
+          set -euo pipefail
           ls -la gradle/wrapper/ || true
           chmod +x gradlew
           if [ ! -f gradle/wrapper/gradle-wrapper.jar ] || [ ! -s gradle/wrapper/gradle-wrapper.jar ]; then
@@ -111,16 +111,23 @@ jobs:
 
       - name: Build Debug APK
         run: |
-          set -e
+          set -euo pipefail
           ./gradlew assembleDebug -x test -x testDebugUnitTest --stacktrace --console=plain 2>&1 | tee build.log
 
-      - name: List APKs and dump logs
+      - name: Show Kotlin/Java errors on failure
+        if: failure()
+        run: |
+          echo "=== Compile errors (e: / w: lines) ==="
+          grep -E "^e: |^w: " build.log 2>/dev/null | head -80 || true
+          echo ""
+          echo "=== Last 300 lines of build.log ==="
+          tail -300 build.log 2>/dev/null || true
+
+      - name: List APKs
         if: always()
         run: |
           echo "=== APKs ==="
           find . -name "*.apk" -type f -print -exec ls -lh {} \; || echo "No APK found"
-          echo "=== tail of build.log ==="
-          tail -200 build.log 2>/dev/null || true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -132,3 +139,12 @@ jobs:
             app/build/outputs/apk/release/*.apk
           if-no-files-found: warn
           retention-days: 30
+
+      - name: Upload build log
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: ignore
+          retention-days: 7
