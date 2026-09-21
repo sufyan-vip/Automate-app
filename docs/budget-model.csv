@@ -1,0 +1,121 @@
+Section,Item,Qty,Unit_PKR,Total_PKR,Notes
+TIER_A_CAPEX,Computers (mix used i5 10th-11th gen + 1 new),5,90000,450000,Used Dell Latitude 5500/5510 Rs 50-78k; 12th gen Rs 115-120k
+TIER_A_CAPEX,24 inch monitors,6,22000,132000,
+TIER_A_CAPEX,Desk + ergonomic chair,5,30000,150000,
+TIER_A_CAPEX,Networking (MikroTik + switch + Cat6 + rack + AP),1,80000,80000,Dual-WAN failover router
+TIER_A_CAPEX,UPS 1.5 kVA + battery,1,60000,60000,Router + server + 2 PCs
+TIER_A_CAPEX,Split AC 1.5 ton inverter,1,110000,110000,
+TIER_A_CAPEX,Renovation (600 sq ft),600,400,240000,Paint partition LED washroom
+TIER_A_CAPEX,CCTV 4 cam + DVR + biometric,1,100000,100000,
+TIER_A_CAPEX,Legal setup (SECP + PSEB + PRA + CA),1,60000,60000,SECP govt fee ~Rs 2000-2500
+TIER_A_CAPEX,Branding + website + domain + Workspace + Clutch,1,80000,80000,
+TIER_A_CAPEX,Tools and SaaS Year 1,1,200000,200000,Lean stack
+TIER_A_CAPEX,SUBTOTAL_without_solar,1,1662000,1662000,
+TIER_A_CAPEX,Solar 6kW hybrid + 5kWh lithium (month 6),1,1100000,1100000,Optional - fund from cash flow
+TIER_A_CAPEX,GRAND_TOTAL_with_solar,1,2762000,2762000,
+TIER_A_MONTHLY,Salaries (founder 80k + 1 mid 110k + 2 jr 120k + designer PT 40k + assistant PT 20k),5,,370000,Punjab min wage 2026 = Rs 40000
+TIER_A_MONTHLY,Employer on-costs (EOBI Rs 2000/head + PESSI),5,2400,12000,
+TIER_A_MONTHLY,Internet (PTCL 50 + StormFiber 30 + 4G backup),1,17000,17000,
+TIER_A_MONTHLY,Electricity WITHOUT solar,1,35000,35000,Winter 20k / summer 60k
+TIER_A_MONTHLY,Utilities (water gas chai kitchen waste),1,8000,8000,
+TIER_A_MONTHLY,Tools and SaaS,1,18000,18000,
+TIER_A_MONTHLY,Cloud hosting VPS dev APIs,1,8000,8000,
+TIER_A_MONTHLY,Accounting and compliance (CA),1,15000,15000,
+TIER_A_MONTHLY,Marketing (Upwork connects LinkedIn ads),1,20000,20000,
+TIER_A_MONTHLY,Maintenance stationery printing,1,8000,8000,
+TIER_A_MONTHLY,Contingency 5pct,1,25000,25000,
+TIER_A_MONTHLY,TOTAL_without_solar,1,536000,536000,USD 1928 at 278
+TIER_A_MONTHLY,Electricity WITH 6kW solar (replaces line above),1,14000,14000,
+TIER_A_MONTHLY,Solar O and M,1,5000,5000,
+TIER_A_MONTHLY,TOTAL_with_solar,1,520000,520000,
+TIER_B_CAPEX,Computers,10,95000,950000,
+TIER_B_CAPEX,Monitors,14,22000,308000,
+TIER_B_CAPEX,Staff furniture,10,30000,300000,
+TIER_B_CAPEX,Co-working furniture,12,22000,264000,
+TIER_B_CAPEX,Business networking + captive portal,1,250000,250000,
+TIER_B_CAPEX,Solar 10 kW hybrid + 5-10 kWh lithium,1,1600000,1600000,Vendor quote 10kW hybrid Rs 1597840
+TIER_B_CAPEX,AC 2.5 ton,2,170000,340000,
+TIER_B_CAPEX,Renovation 1500 sq ft,1500,450,675000,
+TIER_B_CAPEX,Glass cabins,2,100000,200000,
+TIER_B_CAPEX,CCTV 8 cam + access control + biometric,1,180000,180000,
+TIER_B_CAPEX,Lockers,12,5000,60000,
+TIER_B_CAPEX,Branding + signage + website,1,150000,150000,
+TIER_B_CAPEX,Legal setup,1,80000,80000,
+TIER_B_CAPEX,Tools and SaaS Year 1,12,35000,420000,
+TIER_B_CAPEX,Generator 6.5 kVA,1,180000,180000,
+TIER_B_CAPEX,GRAND_TOTAL,1,5957000,5957000,
+TIER_B_MONTHLY,Salaries (founder 150 + sr 200 + 2 mid 240 + 3 jr 195 + QA 70 + admin 40),9,,900000,
+TIER_B_MONTHLY,Employer on-costs,9,,50000,
+TIER_B_MONTHLY,Internet (PTCL 100 + StormFiber 50 + 5G),1,26000,26000,
+TIER_B_MONTHLY,Electricity grid top-up with 10kW solar,1,30000,30000,Winter 10k / summer 55k
+TIER_B_MONTHLY,Solar O and M,1,5000,5000,
+TIER_B_MONTHLY,Utilities kitchen water,1,18000,18000,
+TIER_B_MONTHLY,Tools and SaaS,1,35000,35000,
+TIER_B_MONTHLY,Cloud hosting VPS,1,20000,20000,
+TIER_B_MONTHLY,Accounting audit compliance,1,22000,22000,
+TIER_B_MONTHLY,Marketing,1,45000,45000,
+TIER_B_MONTHLY,Co-working zone O and M,1,30000,30000,
+TIER_B_MONTHLY,Maintenance and repairs,1,15000,15000,
+TIER_B_MONTHLY,Contingency 5pct,1,60000,60000,
+TIER_B_MONTHLY,GROSS_TOTAL,1,1256000,1256000,
+COWORKING_SETUP_FULL,Furniture 12 seats,12,22000,264000,
+COWORKING_SETUP_FULL,Glass cabins,2,100000,200000,
+COWORKING_SETUP_FULL,Extra solar 3kW + battery top-up,1,450000,450000,
+COWORKING_SETUP_FULL,Networking VLAN + captive portal + APs,1,80000,80000,
+COWORKING_SETUP_FULL,Lockers,12,5000,60000,
+COWORKING_SETUP_FULL,AC extension 1.5 ton,1,110000,110000,
+COWORKING_SETUP_FULL,CCTV 4 cam + access control,1,70000,70000,
+COWORKING_SETUP_FULL,Branding signage paint lighting,1,60000,60000,
+COWORKING_SETUP_FULL,Booking + billing software,1,20000,20000,
+COWORKING_SETUP_FULL,Sanctioned load upgrade + electrical,1,50000,50000,
+COWORKING_SETUP_FULL,TOTAL,1,1364000,1364000,
+COWORKING_SETUP_LEAN,Furniture 8 seats,8,22000,176000,
+COWORKING_SETUP_LEAN,Partition + paint,1,120000,120000,
+COWORKING_SETUP_LEAN,Networking captive portal + AP,1,45000,45000,
+COWORKING_SETUP_LEAN,Lockers,8,5000,40000,
+COWORKING_SETUP_LEAN,AC 1.5 ton,1,110000,110000,
+COWORKING_SETUP_LEAN,CCTV 2 cam + access control,1,45000,45000,
+COWORKING_SETUP_LEAN,Branding + signage,1,35000,35000,
+COWORKING_SETUP_LEAN,Booking software,1,10000,10000,
+COWORKING_SETUP_LEAN,Electrical + lighting,1,30000,30000,
+COWORKING_SETUP_LEAN,TOTAL,1,611000,611000,
+COWORKING_REVENUE,9 desks avg Rs 9500,9,9500,85500,Mix hot + dedicated
+COWORKING_REVENUE,Private cabin,1,25000,25000,
+COWORKING_REVENUE,Day passes,25,500,12500,
+COWORKING_REVENUE,Meeting room hours,12,800,9600,
+COWORKING_REVENUE,Virtual office,3,3000,9000,
+COWORKING_REVENUE,Printing + chai cafe,1,8000,8000,
+COWORKING_REVENUE,TOTAL,1,149600,149600,
+COWORKING_COST,Internet dual fiber + 5G,1,26000,26000,
+COWORKING_COST,Electricity grid top-up,1,30000,30000,
+COWORKING_COST,Solar O and M,1,5000,5000,
+COWORKING_COST,Utilities water kitchen waste,1,18000,18000,
+COWORKING_COST,Co-working O and M cleaning coffee,1,30000,30000,
+COWORKING_COST,TOTAL,1,109000,109000,
+COWORKING_SURPLUS,Revenue minus cost,1,40600,40600,Bills fully covered + Rs 40600 surplus. Breakeven = 5 desks steady state / 11 desks during ramp
+PREREQ_SAVINGS,Capex Tier A,1,1662000,1662000,
+PREREQ_SAVINGS,Solar 6kW (month 6),1,1100000,1100000,
+PREREQ_SAVINGS,6-month operating runway Tier A,6,536000,3216000,
+PREREQ_SAVINGS,Personal emergency fund (separate),1,600000,600000,
+PREREQ_SAVINGS,TOTAL_with_solar,1,6578000,6578000,capex 16.62 + solar 11.00 + runway 32.16 + personal 6.00
+PREREQ_SAVINGS,TOTAL_without_solar,1,5478000,5478000,capex 16.62 + runway 32.16 + personal 6.00
+REVENUE_M3,International MRR,1,600000,600000,USD 2160
+REVENUE_M3,Local MRR,1,50000,50000,
+REVENUE_M3,Project revenue,1,200000,200000,
+REVENUE_M3,TOTAL,1,850000,850000,
+REVENUE_M6,International MRR,1,1000000,1000000,USD 3600
+REVENUE_M6,Local MRR,1,108000,108000,6 clients x 18000
+REVENUE_M6,Project revenue,1,300000,300000,
+REVENUE_M6,TOTAL,1,1408000,1408000,
+REVENUE_M12,International MRR,1,1600000,1600000,USD 5750
+REVENUE_M12,Local MRR,1,280000,280000,14 clients x 20000
+REVENUE_M12,Project revenue,1,400000,400000,
+REVENUE_M12,TOTAL,1,2280000,2280000,
+REVENUE_M36,International MRR,1,4500000,4500000,
+REVENUE_M36,Local MRR,1,1125000,1125000,45 clients x 25000
+REVENUE_M36,Project revenue,1,800000,800000,
+REVENUE_M36,TOTAL,1,6425000,6425000,
+PREREQ_SAVINGS_TIERB,Capex Tier B,1,5957000,5957000,
+PREREQ_SAVINGS_TIERB,6-month operating runway Tier B,6,1256000,7536000,
+PREREQ_SAVINGS_TIERB,Personal emergency fund,1,1000000,1000000,
+PREREQ_SAVINGS_TIERB,TOTAL,1,14493000,14493000,~Rs 1.45 crore
